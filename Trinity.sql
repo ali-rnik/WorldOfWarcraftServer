@@ -9,7 +9,7 @@ create table account
 	sha_pass_hash varchar(255)
 );
 
-GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER on account to 'Trinity'@'localhost' identified by 'Trinity';
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER on account to 'user'@'localhost' identified by 'pass';
 
 
 
