@@ -9,15 +9,15 @@ create table account
 	sha_pass_hash varchar(255)
 );
 
-GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER on account to 'user'@'localhost' identified by 'pass';
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER on account to 'Trinity'@'localhost' identified by 'Trinity';
 
 
 
 select @username;
-set @username = 'strongsaxophone@gmail.com';
+set @username = '';
 
 select @password;
-set @password = 'strongsaxophone';
+set @password = '';
 
 select @hash;
 set @hash = SHA1(CONCAT(UPPER(@username), ':', UPPER(@password)));
@@ -26,3 +26,11 @@ insert into account
 (username, sha_pass_hash)
 values
 (@username, @hash); 
+
+
+
+
+
+
+
+alter table account add validVer varchar(255);

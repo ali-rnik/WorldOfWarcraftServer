@@ -42,9 +42,16 @@ S	html() E
 	S	head() E	
 		S	title("SignUp page") E
 		S meta().set("charset", "UTF-8") E
+		S meta().set("name", "viewport").set("content", "width=device-width, initial-scale=1.0") E
+		S cgicc::link().set("rel", "icon").set("href", "http://strongwow.ir/media/tabicon.png") E
+		S cgicc::link().set("rel", "stylesheet").set("href", "http://strongwow.ir/styles.css") E
 	S	head() E	
 	S body() E	
 		
+		S br() E
+		S br() E
+		S br() E
+		S br() E
 		//fetching data from form.
 		Cgicc fetchFrom;
 		string email           = fetchFrom("email");
@@ -54,16 +61,9 @@ S	html() E
 		string genCaptcha      = fetchFrom("genCaptcha");
 		
 		//define variables;
-		string gmail = "", isExist = "", userName = "";
+		string gmail = "", isExist = "", userName = "", validVer = "", commandForPost = "";
 		
-		/*debug
-		
-		email = "strongi@gmail.com";
-		password = "4aliali";
-		passwordConfirm = "4aliali";
-		userCaptcha = "breserker";
-		genCaptcha = "2";
-		*/
+		//debug
 		
 		//checking genCaptcha ?= userCaptcha
     SERVER = "tcp://127.0.0.1:3306";
@@ -90,10 +90,13 @@ S	html() E
 		delete res;
 		
 		//checking captcha.
+		for(int i = 0; i < (int)userCaptcha.size(); i++)
+			if(isupper(userCaptcha[i]))
+				userCaptcha[i] = tolower(userCaptcha[i]);
 		if(genCaptcha != userCaptcha)
 		{
 			S p("!شاید حروف کپچا را اشتباه وارد کرده اید") E
-			S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+			S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 			goto labelH;
 		}
 		
@@ -102,7 +105,7 @@ S	html() E
 		{
 			S p(".ایمیل شما اشتباه وارد شده است") E
 			S p("!ایمیل باید نهایتا 32 کاراکتر باشد و حداقل 13 کاراکتر") E
-			S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+			S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 			goto labelH;
 		}
 		
@@ -113,7 +116,7 @@ S	html() E
 			{
 				S p(".ایمیل شما اشتباه وارد شده است") E
 				S p(".ایمیل شما دارای فضای خالی (اسپیس) است") E
-				S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+				S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 				goto labelH;
 			}
 		}
@@ -124,9 +127,15 @@ S	html() E
 		{
 			S p(".ایمیل شما اشتباه وارد شده است") E
 			S p(".ایمیل شما باید حتما جی میل باشد") E
-			S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+			S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 			goto labelH;
 		}
+		
+		
+		//creating username based on email;
+		for(int i = email.size()-11; i >= 0; i--)
+			userName+=email[i];
+		reverse(userName.begin(), userName.end());
 		
 		//checking not exist in dataBase
 		SERVER = "tcp://127.0.0.1:3306";
@@ -141,14 +150,14 @@ S	html() E
 				
 		pstmt = con->prepareStatement
     ("SELECT username FROM account WHERE username = ?");
-		pstmt->setString(1, email);
+		pstmt->setString(1, userName);
 		res = pstmt->executeQuery();
 		while(res->next() == true)
 			isExist = res->getString("username");
 		if(isExist != "")
 		{
 			S p(".بنظر می رسد با ایمیل شما اکانتی موجود است") E
-			S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+			S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 			goto labelH;
 		}
 
@@ -162,7 +171,7 @@ S	html() E
 		{
 			S p(".پسورد شما اشتباه وارد شده است") E
 			S p("!پسورد باید نهایتا 30 کاراکتر باشد و حداقل 6 کاراکتر") E
-			S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+			S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 			goto labelH;
 		}
 	
@@ -173,21 +182,35 @@ S	html() E
 			{
 				S p(".پسورد شما اشتباه وارد شده است") E
 				S p(".پسورد شما فقط باید دارای حروف و اعداد انگلیسی باشد") E
-				S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+				S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
 				goto labelH;
 			}
 		}
 		
-		//checking wether email is real
+		//checking password with passwordConfirm
+		if(password != passwordConfirm)
+		{
+				S p(".پسورد شما اشتباه وارد شده است") E
+				S p(".پسورد شما با تاییدیه آن مطابقت ندارد") E
+				S a("بازگشت به صفحه اول").set("href", "http://strongwow.ir/") E
+				goto labelH;
+		}
+
+				
+		//---------correctness confirmed--------//
+		//now we save this temp account for verification//
 		
 		
-		//------------------------------correctness confirmed-----------------//
+		//create verifaction code for this account
+		srand(time(NULL));
+		validVer = to_string(rand()%8999 + 1000);
 		
-		
-		//creating username based on email;
-		for(int i = email.size()-11; i >= 0; i--)
-			userName+=email[i];
-		reverse(userName.begin(), userName.end());
+		//sending valid verification code to her/his email
+		commandForPost = "./verifyEmail.sh ";
+		commandForPost += validVer;
+		commandForPost += " ";
+		commandForPost += email;
+		system ( commandForPost.c_str() );
 		
 		
 		//creating account
@@ -201,33 +224,49 @@ S	html() E
 		
 		stmt = con->createStatement();
 
-		
 		stmt->execute("USE " + DATABASE);
 		
+		//set userName for select dataBase
 		stmt->executeQuery("select @username");
 		pstmt = con->prepareStatement("set @username = ?");
 		pstmt->setString(1, userName);
 		pstmt->execute();
 		delete pstmt;
 		
+		//set password for dataBase
 		stmt->executeQuery("select @password");
 		pstmt = con->prepareStatement("set @password = ?");
 		pstmt->setString(1, password);
 		pstmt->execute();
 		delete pstmt;
-				
+		
+		//set hash password mixture above
 		stmt->executeQuery("select @hash");
 		stmt->execute("set @hash = SHA1(CONCAT(UPPER(@username), ':', UPPER(@password)))");
 		
-		stmt->execute("insert into account (username, sha_pass_hash) values (@username, @hash)");
+		//insert validVer sha_pass_hash username to account table, also we add 'un' to the end of  userName for encryption;
+		pstmt = con->prepareStatement
+		("insert into account (username, sha_pass_hash, validVer) values (?, @hash, ?)");
+		pstmt->setString(1, userName+"un");
+		pstmt->setString(2, validVer);
+		pstmt->execute();
+		delete pstmt;
 		
-		delete con;
 		delete stmt;
+		delete con;
 		
-		S p("Account created successfuly with the following information : ") E
-		S p("Your Battle.net Account Name: " + userName) E
-		S p("Your Password: " + password) E
-		S a("بازگشت به صفحه اول").set("href", "main.cgi") E
+		// creating form for user to enter his verifaction code
+		S form().set("action", "verifySignUp.cgi").set("method", "post").set("autocomplete", "off") E
+			S ":کد تاییدی که به ایمیل شما فرستاده شده را اینجا وارد کنید" E
+			S br() E
+			S br() E				
+			S input().set("type", "text").set("name", "unvalidVer") E
+			S br() E
+			S input().set("type", "hidden").set("name", "userName").set("value", userName) E
+			S br() E
+			S input().set("type", "submit").set("value", "submit") E
+		S form() E
+
 	labelH : 
 	S body() E	
 S html() E

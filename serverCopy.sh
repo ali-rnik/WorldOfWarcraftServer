@@ -1,1 +1,3 @@
-sudo cp $1 $2 $3 $4 /var/www/html/
+#!/bin/bash
+
+scp -r ../wow-web root@207.154.255.147:.
